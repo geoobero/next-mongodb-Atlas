@@ -286,7 +286,7 @@ export default function Students() {
                 </svg>
               </button>
             </div>
-            <form onSubmit={handleSubmit} className="p-6 space-y-5">
+            <form onSubmit={handleSubmit} className="p-6 space-y-5 text-gray-600">
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-2">Full Name</label>
                 <input

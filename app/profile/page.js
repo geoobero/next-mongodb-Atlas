@@ -119,7 +119,7 @@ export default function Profile() {
   }
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] bg-slate-900 relative overflow-hidden">
+    <div className="min-h-[100vh] bg-slate-900 relative overflow-hidden">
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-1/4 left-1/4 w-96 h-96 rounded-full blur-3xl bg-blue-500/20"></div>
         <div className="absolute bottom-1/4 right-1/4 w-96 h-96 rounded-full blur-3xl bg-purple-500/20"></div>

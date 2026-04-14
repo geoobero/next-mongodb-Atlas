@@ -149,7 +149,7 @@ export default function Students() {
   }
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] bg-slate-900 relative overflow-hidden">
+    <div className="min-h-[100vh] bg-slate-900 relative overflow-hidden">
       {/* Blurred Background Shapes */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-1/4 left-1/4 w-96 h-96 rounded-full blur-3xl bg-blue-500/20"></div>

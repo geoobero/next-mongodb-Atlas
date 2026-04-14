@@ -167,7 +167,7 @@ export default function Students() {
           {isAdmin && (
             <button
               onClick={() => setIsModalOpen(true)}
-              className="mt-4 md:mt-0 inline-flex items-center px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-500 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-200"
+              className="mt-4 md:mt-0 inline-flex items-center cursor-pointer px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-500 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-200"
             >
               <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
@@ -328,10 +328,10 @@ export default function Students() {
                 />
               </div>
               <div className="flex space-x-3 pt-2">
-                <button type="button" onClick={resetForm} className="flex-1 px-6 py-3 border border-white/10 text-white font-semibold rounded-xl hover:bg-white/5 transition-colors">
+                <button type="button" onClick={resetForm} className="flex-1 cursor-pointer px-6 py-3 border border-white/10 text-white font-semibold rounded-xl hover:bg-white/5 transition-colors">
                   Cancel
                 </button>
-                <button type="submit" className="flex-1 px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-500 text-white font-semibold rounded-xl hover:shadow-lg transition-all">
+                <button type="submit" className="flex-1 cursor-pointer px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-500 text-white font-semibold rounded-xl hover:shadow-lg transition-all">
                   {editingId ? "Update" : "Add Student"}
                 </button>
               </div>

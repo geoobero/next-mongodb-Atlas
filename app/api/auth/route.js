@@ -10,6 +10,7 @@ const userSchema = new mongoose.Schema({
   email: { type: String, required: true, unique: true },
   password: { type: String, required: true },
   role: { type: String, enum: ["admin", "user"], default: "user" },
+  profilePicture: { type: String, default: "" },
 }, { timestamps: true });
 
 const User = mongoose.models.User || mongoose.model("User", userSchema);
@@ -24,7 +25,7 @@ export async function POST(request) {
   try {
     const { searchParams } = new URL(request.url);
     const action = searchParams.get("action");
-    
+
     await connectDB();
     const bcrypt = require("bcryptjs");
     const body = await request.json();
@@ -40,7 +41,7 @@ export async function POST(request) {
       }
 
       const hashedPassword = await bcrypt.hash(password, 10);
-      
+
       const user = await User.create({
         name,
         email,
@@ -129,6 +130,48 @@ export async function POST(request) {
     return NextResponse.json(
       { success: false, error: error.message },
       { status: 500 }
+    );
+  }
+}
+
+export async function GET(request) {
+  try {
+    const token = request.cookies.get("token")?.value;
+    if (!token) {
+      return NextResponse.json(
+        { success: false, error: "Not authenticated" },
+        { status: 401 }
+      );
+    }
+
+    await connectDB();
+    const decoded = jwt.verify(token, JWT_SECRET);
+    const user = await User.findById(decoded.id).select("-password");
+
+    if (!user) {
+      return NextResponse.json(
+        { success: false, error: "User not found" },
+        { status: 404 }
+      );
+    }
+
+    return NextResponse.json({
+      success: true,
+      data: {
+        user: {
+          id: user._id,
+          name: user.name,
+          email: user.email,
+          role: user.role,
+          profilePicture: user.profilePicture || ""
+        }
+      }
+    });
+
+  } catch (error) {
+    return NextResponse.json(
+      { success: false, error: "Invalid token" },
+      { status: 401 }
     );
   }
 }

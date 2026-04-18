@@ -1,12 +1,13 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 export default function Login() {
-  const [isLogin, setIsLogin] = useState(true);
-  const [form, setForm] = useState({ name: "", email: "", password: "" });
+  const [form, setForm] = useState({ email: "", password: "" });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const router = useRouter();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -14,9 +15,7 @@ export default function Login() {
     setLoading(true);
 
     try {
-      const action = isLogin ? "login" : "register";
-
-      const res = await fetch(`/api/auth?action=${action}`, {
+      const res = await fetch("/api/auth?action=login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(form),
@@ -31,9 +30,8 @@ export default function Login() {
       }
 
       setLoading(false);
-      setTimeout(() => {
-        window.location.href = "/";
-      }, 500);
+      router.push("/");
+      router.refresh();
 
     } catch (err) {
       setError("Something went wrong. Please try again.");
@@ -43,14 +41,12 @@ export default function Login() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-slate-900">
-      {/* Blurred Background Shapes */}
-      <div className="fixed inset-0 overflow-hidden">
+      <div className="fixed inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-1/4 left-1/4 w-96 h-96 rounded-full blur-3xl bg-blue-500/20"></div>
         <div className="absolute bottom-1/4 right-1/4 w-96 h-96 rounded-full blur-3xl bg-purple-500/20"></div>
         <div className="absolute top-1/2 left-1/2 w-72 h-72 rounded-full blur-3xl bg-pink-500/20"></div>
       </div>
 
-      {/* Glassmorphism Card */}
       <div className="relative w-full max-w-md mx-4 backdrop-blur-xl bg-white/5 border border-white/10 rounded-3xl shadow-2xl p-8 md:p-10">
         
         <div className="text-center mb-8">
@@ -59,12 +55,8 @@ export default function Login() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
             </svg>
           </div>
-          <h1 className="text-3xl font-bold text-white mb-2">
-            {isLogin ? "Welcome Back" : "Create Account"}
-          </h1>
-          <p className="text-white/60">
-            {isLogin ? "Sign in to continue" : "Join us today"}
-          </p>
+          <h1 className="text-3xl font-bold text-white mb-2">Welcome Back</h1>
+          <p className="text-white/60">Sign in to continue</p>
         </div>
 
         {error && (
@@ -74,19 +66,6 @@ export default function Login() {
         )}
 
         <form onSubmit={handleSubmit} className="space-y-5">
-          {!isLogin && (
-            <div>
-              <input
-                type="text"
-                value={form.name}
-                onChange={(e) => setForm({ ...form, name: e.target.value })}
-                required={!isLogin}
-                className="w-full px-4 py-3.5 rounded-xl bg-white/5 border border-white/10 text-white placeholder-white/40 outline-none focus:border-blue-500 transition-all"
-                placeholder="Full Name"
-              />
-            </div>
-          )}
-
           <div>
             <input
               type="email"
@@ -114,19 +93,12 @@ export default function Login() {
             disabled={loading}
             className="w-full py-3.5 font-semibold rounded-xl bg-gradient-to-r from-blue-500 to-purple-500 text-white hover:shadow-lg hover:shadow-blue-500/25 transition-all disabled:opacity-50"
           >
-            {loading ? "Processing..." : isLogin ? "Sign In" : "Create Account"}
+            {loading ? "Signing in..." : "Sign In"}
           </button>
         </form>
 
-        <div className="mt-6 text-center text-white/60">
-          {isLogin ? "Don't have an account?" : "Already have an account?"}{" "}
-          <button
-            type="button"
-            onClick={() => { setIsLogin(!isLogin); setError(""); }}
-            className="font-semibold text-blue-400 hover:text-blue-300"
-          >
-            {isLogin ? "Sign Up" : "Sign In"}
-          </button>
+        <div className="mt-6 text-center text-white/60 text-sm">
+          <p>New users must be registered by an administrator.</p>
         </div>
       </div>
     </div>

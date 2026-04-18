@@ -1,25 +1,8 @@
 import { NextResponse } from "next/server";
 import jwt from "jsonwebtoken";
-import mongoose from "mongoose";
+import { connectDB, User } from "../models";
 
 const JWT_SECRET = process.env.JWT_SECRET || "your-super-secret-key-change-in-production";
-const MONGODB_URI = process.env.MONGODB_URI;
-
-const userSchema = new mongoose.Schema({
-  name: { type: String, required: true },
-  email: { type: String, required: true, unique: true },
-  password: { type: String, required: true },
-  role: { type: String, enum: ["admin", "user"], default: "user" },
-  profilePicture: { type: String, default: "" },
-}, { timestamps: true });
-
-const User = mongoose.models.User || mongoose.model("User", userSchema);
-
-async function connectDB() {
-  if (mongoose.connection.readyState === 0) {
-    await mongoose.connect(MONGODB_URI);
-  }
-}
 
 export async function PUT(request) {
   try {
@@ -35,7 +18,7 @@ export async function PUT(request) {
     await connectDB();
 
     const body = await request.json();
-    const { name, profilePicture } = body;
+    const { name, profilePicture, phone, address, age, birthday } = body;
 
     const user = await User.findById(decoded.id);
     if (!user) {
@@ -47,9 +30,13 @@ export async function PUT(request) {
 
     if (name) user.name = name;
     if (profilePicture !== undefined) user.profilePicture = profilePicture;
+    if (phone !== undefined) user.phone = phone;
+    if (address !== undefined) user.address = address;
+    if (age !== undefined) user.age = age;
+    if (birthday !== undefined) user.birthday = birthday;
     await user.save();
 
-    const response = NextResponse.json({
+    return NextResponse.json({
       success: true,
       data: {
         user: {
@@ -57,12 +44,14 @@ export async function PUT(request) {
           name: user.name,
           email: user.email,
           role: user.role,
-          profilePicture: user.profilePicture
+          phone: user.phone || "",
+          address: user.address || "",
+          age: user.age || null,
+          birthday: user.birthday || null,
+          profilePicture: user.profilePicture || ""
         }
       }
     });
-
-    return response;
 
   } catch (error) {
     console.error("Profile Update Error:", error.message);

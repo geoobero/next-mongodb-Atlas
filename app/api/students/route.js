@@ -1,150 +1,177 @@
 import { NextResponse } from "next/server";
 import jwt from "jsonwebtoken";
+import { connectDB, Student, User, Classroom, SchoolYear, Notification } from "../models";
 
 const JWT_SECRET = process.env.JWT_SECRET || "your-super-secret-key-change-in-production";
 
-let cachedMongoose = null;
-
-async function connectDB() {
-  const MONGODB_URI = process.env.MONGODB_URI;
-  
-  if (!MONGODB_URI) {
-    throw new Error("Please define the MONGODB_URI environment variable");
-  }
-
-  if (cachedMongoose) {
-    return cachedMongoose;
-  }
-
-  const mongooseLib = await import("mongoose");
-  
-  cachedMongoose = await mongooseLib.default.connect(MONGODB_URI, {
-    bufferCommands: false,
-  });
-
-  return cachedMongoose;
-}
-
-async function getStudentModel() {
-  const mongooseLib = await import("mongoose");
-  
-  const studentSchema = new mongooseLib.Schema(
-    {
-      name: { type: String, required: true },
-      email: { type: String, required: true },
-      age: { type: Number, required: true },
-    },
-    { timestamps: true }
-  );
-
-  return mongooseLib.models.Student || mongooseLib.model("Student", studentSchema);
-}
-
-function getUserFromRequest(request) {
-  const authHeader = request.headers.get("authorization");
-  const token = authHeader?.replace("Bearer ", "") || request.cookies.get("token")?.value;
-
-  if (!token) {
-    return null;
-  }
-
-  try {
-    return jwt.verify(token, JWT_SECRET);
-  } catch (error) {
-    return null;
-  }
-}
-
 export async function GET(request) {
   try {
-    const user = getUserFromRequest(request);
-    if (!user) {
-      return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
+    const token = request.cookies.get("token")?.value;
+    if (!token) {
+      return NextResponse.json(
+        { success: false, error: "Not authenticated" },
+        { status: 401 }
+      );
     }
 
     await connectDB();
-    const Student = await getStudentModel();
-    const students = await Student.find().sort({ createdAt: -1 });
-    return NextResponse.json({ success: true, data: students });
+    const decoded = jwt.verify(token, JWT_SECRET);
+    
+    const { searchParams } = new URL(request.url);
+    const schoolYearId = searchParams.get("schoolYearId");
+    const parentId = searchParams.get("parentId");
+    const classroomId = searchParams.get("classroomId");
+    const status = searchParams.get("status");
+
+    let query = {};
+
+    if (schoolYearId) {
+      query.schoolYearId = schoolYearId;
+    } else {
+      const activeYear = await SchoolYear.findOne({ isActive: true });
+      if (activeYear) {
+        query.schoolYearId = activeYear._id;
+      }
+    }
+
+    if (decoded.role === "parent") {
+      query.parentId = decoded.id;
+    } else if (parentId) {
+      query.parentId = parentId;
+    }
+
+    if (decoded.role === "teacher") {
+      const teacherClassrooms = await Classroom.find({ adviserId: decoded.id }).select("_id");
+      const classroomIds = teacherClassrooms.map(c => c._id);
+      query.classroomId = { $in: classroomIds };
+    } else if (classroomId) {
+      query.classroomId = classroomId;
+    }
+
+    if (status) {
+      query.status = status;
+    }
+
+    const students = await Student.find(query)
+      .populate("parentId", "name email phone")
+      .populate("classroomId", "name gradeLevel adviserId")
+      .populate("schoolYearId", "year")
+      .sort({ name: 1 });
+
+    return NextResponse.json({
+      success: true,
+      data: { students }
+    });
+
   } catch (error) {
-    console.error("GET Error:", error.message);
-    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    console.error("Students GET Error:", error.message);
+    return NextResponse.json(
+      { success: false, error: error.message },
+      { status: 500 }
+    );
   }
 }
 
 export async function POST(request) {
   try {
-    const user = getUserFromRequest(request);
-    if (!user) {
-      return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
-    }
-
-    if (user.role !== "admin") {
-      return NextResponse.json({ success: false, error: "Forbidden: Admin only" }, { status: 403 });
-    }
-
-    await connectDB();
-    const Student = await getStudentModel();
-    const body = await request.json();
-    const student = await Student.create(body);
-    return NextResponse.json({ success: true, data: student }, { status: 201 });
-  } catch (error) {
-    console.error("POST Error:", error.message);
-    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
-  }
-}
-
-export async function PUT(request) {
-  try {
-    const user = getUserFromRequest(request);
-    if (!user) {
-      return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
-    }
-
-    if (user.role !== "admin") {
-      return NextResponse.json({ success: false, error: "Forbidden: Admin only" }, { status: 403 });
+    const token = request.cookies.get("token")?.value;
+    if (!token) {
+      return NextResponse.json(
+        { success: false, error: "Not authenticated" },
+        { status: 401 }
+      );
     }
 
     await connectDB();
-    const Student = await getStudentModel();
-    const { searchParams } = new URL(request.url);
-    const id = searchParams.get("id");
-    const body = await request.json();
-    const student = await Student.findByIdAndUpdate(id, body, { new: true });
+    const decoded = jwt.verify(token, JWT_SECRET);
     
-    if (!student) {
-      return NextResponse.json({ success: false, error: "Student not found" }, { status: 404 });
+    const body = await request.json();
+    const { name, age, birthday, targetLevel, address, schoolYearId } = body;
+
+    if (!name || !age || !birthday) {
+      return NextResponse.json(
+        { success: false, error: "Name, age, and birthday are required" },
+        { status: 400 }
+      );
     }
-    return NextResponse.json({ success: true, data: student });
+
+    let parentId = decoded.id;
+    let studentSchoolYearId = schoolYearId;
+
+    if (decoded.role === "admin") {
+      if (!body.parentId) {
+        return NextResponse.json(
+          { success: false, error: "Parent ID is required when admin creates a student" },
+          { status: 400 }
+        );
+      }
+      if (!schoolYearId) {
+        return NextResponse.json(
+          { success: false, error: "School year is required" },
+          { status: 400 }
+        );
+      }
+      parentId = body.parentId;
+      studentSchoolYearId = schoolYearId;
+    } else if (decoded.role === "parent") {
+      if (!targetLevel) {
+        return NextResponse.json(
+          { success: false, error: "Target student level is required" },
+          { status: 400 }
+        );
+      }
+      parentId = decoded.id;
+    } else {
+      return NextResponse.json(
+        { success: false, error: "Only admin and parents can create students" },
+        { status: 403 }
+      );
+    }
+
+    const parent = await User.findById(parentId);
+    if (!parent || parent.role !== "parent") {
+      return NextResponse.json(
+        { success: false, error: "Invalid parent" },
+        { status: 400 }
+      );
+    }
+
+    if (!studentSchoolYearId) {
+      const activeYear = await SchoolYear.findOne({ isActive: true });
+      if (!activeYear) {
+        return NextResponse.json(
+          { success: false, error: "No active school year found" },
+          { status: 400 }
+        );
+      }
+      studentSchoolYearId = activeYear._id;
+    }
+
+    const student = await Student.create({
+      name,
+      age,
+      birthday: new Date(birthday),
+      targetLevel: targetLevel || "",
+      address: address || "",
+      parentId,
+      schoolYearId: studentSchoolYearId,
+      status: "pending"
+    });
+
+    const populatedStudent = await Student.findById(student._id)
+      .populate("parentId", "name email phone")
+      .populate("schoolYearId", "year");
+
+    return NextResponse.json({
+      success: true,
+      data: { student: populatedStudent }
+    }, { status: 201 });
+
   } catch (error) {
-    console.error("PUT Error:", error.message);
-    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
-  }
-}
-
-export async function DELETE(request) {
-  try {
-    const user = getUserFromRequest(request);
-    if (!user) {
-      return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
-    }
-
-    if (user.role !== "admin") {
-      return NextResponse.json({ success: false, error: "Forbidden: Admin only" }, { status: 403 });
-    }
-
-    await connectDB();
-    const Student = await getStudentModel();
-    const { searchParams } = new URL(request.url);
-    const id = searchParams.get("id");
-    const student = await Student.findByIdAndDelete(id);
-    
-    if (!student) {
-      return NextResponse.json({ success: false, error: "Student not found" }, { status: 404 });
-    }
-    return NextResponse.json({ success: true, data: student });
-  } catch (error) {
-    console.error("DELETE Error:", error.message);
-    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    console.error("Students POST Error:", error.message);
+    return NextResponse.json(
+      { success: false, error: error.message },
+      { status: 500 }
+    );
   }
 }

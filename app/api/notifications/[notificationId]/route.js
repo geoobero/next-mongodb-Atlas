@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import jwt from "jsonwebtoken";
-import { connectDB, Notification } from "../../../models";
+import { connectDB, Notification } from "../../models";
 
 const JWT_SECRET = process.env.JWT_SECRET || "your-super-secret-key-change-in-production";
 
@@ -17,8 +17,8 @@ export async function DELETE(request, { params }) {
     await connectDB();
     const decoded = jwt.verify(token, JWT_SECRET);
 
-    const { id } = await params;
-    const notification = await Notification.findById(id);
+    const { notificationId } = await params;
+    const notification = await Notification.findById(notificationId);
     
     if (!notification) {
       return NextResponse.json(
@@ -34,7 +34,7 @@ export async function DELETE(request, { params }) {
       );
     }
 
-    await Notification.findByIdAndDelete(id);
+    await Notification.findByIdAndDelete(notificationId);
 
     return NextResponse.json({
       success: true,

@@ -9,7 +9,7 @@ export async function GET(request) {
     const token = request.cookies.get("token")?.value;
     if (!token) {
       return NextResponse.json(
-        { success: false, error: "Not authenticated" },
+        { success: false, error: "Not authenticated." },
         { status: 401 }
       );
     }

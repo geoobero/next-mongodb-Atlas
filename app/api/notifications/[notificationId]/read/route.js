@@ -21,7 +21,7 @@ export async function PUT(request, { params }) {
     const notification = await Notification.findById(notificationId);
     if (!notification) {
       return NextResponse.json(
-        { success: false, error: "Notification not found" },
+        { success: false, error: "Notification not found." },
         { status: 404 }
       );
     }

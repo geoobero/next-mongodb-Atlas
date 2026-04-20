@@ -480,7 +480,7 @@ export default function Navbar() {
                 </button>
 
                 {notificationDropdownOpen && (
-                  <div className="absolute right-0 mt-3 w-80 backdrop-blur-xl bg-black border border-white/10 rounded-2xl shadow-2xl py-2 animate-in fade-in slide-in-from-top-2 duration-200 z-50">
+                  <div className="fixed left-1/2 top-1/2 z-50 w-[calc(100vw-2rem)] max-w-sm -translate-x-1/2 -translate-y-1/2 backdrop-blur-xl bg-black border border-white/10 rounded-2xl shadow-2xl py-2 animate-in fade-in zoom-in-95 duration-200 md:absolute md:right-0 md:left-auto md:top-auto md:mt-3 md:w-80 md:max-w-none md:translate-x-0 md:translate-y-0 md:slide-in-from-top-2">
                     <div className="flex items-center justify-between px-4 py-2 border-b border-white/10">
                       <span className="text-sm font-semibold text-white">
                         Notifications

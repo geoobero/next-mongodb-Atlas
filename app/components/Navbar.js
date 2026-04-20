@@ -730,42 +730,6 @@ export default function Navbar() {
                         Add User
                       </Link>
 
-                      {/* Mobile-only Admin Links - shown in dropdown */}
-                      <Link
-                        href="/admin/users"
-                        onClick={() => setDropdownOpen(false)}
-                        className="flex items-center px-4 py-3 text-sm text-white/80 hover:bg-white/5 hover:text-white transition-colors md:hidden"
-                      >
-                        USERS
-                      </Link>
-                      <Link
-                        href="/admin/classrooms"
-                        onClick={() => setDropdownOpen(false)}
-                        className="flex items-center px-4 py-3 text-sm text-white/80 hover:bg-white/5 hover:text-white transition-colors md:hidden"
-                      >
-                        CLASSROOMS
-                      </Link>
-                      <Link
-                        href="/admin/school-years"
-                        onClick={() => setDropdownOpen(false)}
-                        className="flex items-center px-4 py-3 text-sm text-white/80 hover:bg-white/5 hover:text-white transition-colors md:hidden"
-                      >
-                        SCHOOL YEARS
-                      </Link>
-                      <Link
-                        href="/admin/feed"
-                        onClick={() => setDropdownOpen(false)}
-                        className="flex items-center px-4 py-3 text-sm text-white/80 hover:bg-white/5 hover:text-white transition-colors md:hidden"
-                      >
-                        FEED
-                      </Link>
-                      <Link
-                        href="/admin/reports"
-                        onClick={() => setDropdownOpen(false)}
-                        className="flex items-center px-4 py-3 text-sm text-white/80 hover:bg-white/5 hover:text-white transition-colors md:hidden"
-                      >
-                        REPORTS
-                      </Link>
                     </>
                   )}
 

@@ -19,16 +19,22 @@ export async function GET(request) {
     
     const { searchParams } = new URL(request.url);
     const unreadOnly = searchParams.get("unreadOnly") === "true";
+    const limit = parseInt(searchParams.get("limit")) || 5;
+    const skip = parseInt(searchParams.get("skip")) || 0;
 
     let query = { userId: decoded.id };
     if (unreadOnly) {
       query.read = false;
     }
 
+    const totalCount = await Notification.countDocuments(query);
+    const hasMore = skip + limit < totalCount;
+
     const notifications = await Notification.find(query)
       .populate("studentId", "name")
       .sort({ createdAt: -1 })
-      .limit(50);
+      .skip(skip)
+      .limit(limit);
 
     const unreadCount = await Notification.countDocuments({ 
       userId: decoded.id, 
@@ -39,7 +45,9 @@ export async function GET(request) {
       success: true,
       data: { 
         notifications,
-        unreadCount
+        unreadCount,
+        hasMore,
+        totalCount
       }
     });
 

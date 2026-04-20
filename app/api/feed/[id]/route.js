@@ -4,6 +4,16 @@ import { connectDB, FeedPost } from "../../models";
 
 const JWT_SECRET = process.env.JWT_SECRET || "your-super-secret-key-change-in-production";
 
+function escapeHtml(text) {
+  if (!text) return text;
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
 export async function GET(request, { params }) {
   try {
     const token = request.cookies.get("token")?.value;
@@ -51,7 +61,7 @@ export async function PUT(request, { params }) {
       return NextResponse.json({ success: false, error: "Post not found" }, { status: 404 });
     }
 
-    if (content !== undefined) post.content = content.trim();
+    if (content !== undefined) post.content = escapeHtml(content.trim());
     if (isPinned !== undefined) post.isPinned = Boolean(isPinned);
 
     await post.save();

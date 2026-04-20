@@ -4,6 +4,16 @@ import { connectDB, IssueReport, Notification } from "../../models";
 
 const JWT_SECRET = process.env.JWT_SECRET || "your-super-secret-key-change-in-production";
 
+function escapeHtml(text) {
+  if (!text) return text;
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
 export async function PUT(request, { params }) {
   try {
     const token = request.cookies.get("token")?.value;
@@ -67,7 +77,7 @@ export async function PUT(request, { params }) {
     if (hasReply) {
       report.replies.push({
         adminId: decoded.id,
-        message: normalizedReply,
+        message: escapeHtml(normalizedReply),
       });
     }
 

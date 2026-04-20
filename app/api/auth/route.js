@@ -4,6 +4,33 @@ import { connectDB, User } from "../models";
 
 const JWT_SECRET = process.env.JWT_SECRET || "your-super-secret-key-change-in-production";
 
+const loginAttempts = new Map();
+const MAX_ATTEMPTS = 5;
+const BLOCK_DURATION = 5 * 60 * 1000;
+
+function isBlocked(email) {
+  const attempt = loginAttempts.get(email);
+  if (!attempt) return false;
+  if (Date.now() < attempt.blockedUntil) {
+    return true;
+  }
+  loginAttempts.delete(email);
+  return false;
+}
+
+function recordFailedAttempt(email) {
+  const attempt = loginAttempts.get(email) || { count: 0, blockedUntil: 0 };
+  attempt.count += 1;
+  if (attempt.count >= MAX_ATTEMPTS) {
+    attempt.blockedUntil = Date.now() + BLOCK_DURATION;
+  }
+  loginAttempts.set(email, attempt);
+}
+
+function clearFailedAttempts(email) {
+  loginAttempts.delete(email);
+}
+
 export async function POST(request) {
   try {
     const { searchParams } = new URL(request.url);
@@ -15,6 +42,13 @@ export async function POST(request) {
     const { name, email, password } = body;
 
     if (action === "login") {
+      if (isBlocked(email)) {
+        return NextResponse.json(
+          { success: false, error: "Too many login attempts. Please try again later." },
+          { status: 429 }
+        );
+      }
+
       const user = await User.findOne({ email });
       if (!user) {
         return NextResponse.json(
@@ -25,11 +59,14 @@ export async function POST(request) {
 
       const isMatch = await bcrypt.compare(password, user.password);
       if (!isMatch) {
+        recordFailedAttempt(email);
         return NextResponse.json(
           { success: false, error: "Invalid credentials" },
           { status: 401 }
         );
       }
+
+      clearFailedAttempts(email);
 
       const token = jwt.sign(
         { id: user._id, email: user.email, role: user.role },

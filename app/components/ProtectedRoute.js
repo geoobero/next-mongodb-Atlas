@@ -1,37 +1,37 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter, usePathname } from "next/navigation";
+import { useRouter } from "next/navigation";
 
 export default function ProtectedRoute({ children }) {
   const [loading, setLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const router = useRouter();
-  const pathname = usePathname();
 
   useEffect(() => {
-    const checkAuth = () => {
-      const cookies = document.cookie.split("; ");
-      const tokenCookie = cookies.find((row) => row.startsWith("token="));
-      
-      if (tokenCookie) {
-        const token = tokenCookie.split("=")[1];
-        if (token && token.length > 0) {
+    const checkAuth = async () => {
+      try {
+        const res = await fetch("/api/auth", { cache: "no-store" });
+        const data = await res.json();
+
+        if (data.success) {
           setIsAuthenticated(true);
+        } else {
+          setIsAuthenticated(false);
         }
+      } catch (error) {
+        setIsAuthenticated(false);
+      } finally {
+        setLoading(false);
       }
-      
-      setLoading(false);
     };
 
     checkAuth();
   }, []);
 
   useEffect(() => {
-    if (!loading) {
-      if (!isAuthenticated) {
-        router.push("/login");
-      }
+    if (!loading && !isAuthenticated) {
+      router.push("/login");
     }
   }, [loading, isAuthenticated, router]);
 

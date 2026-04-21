@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
 import jwt from "jsonwebtoken";
 import { connectDB, IssueReport, Notification } from "../../models";
+import { getJwtSecret } from "../../auth-helpers";
 
-const JWT_SECRET = process.env.JWT_SECRET || "your-super-secret-key-change-in-production";
+const JWT_SECRET = getJwtSecret();
 
 function escapeHtml(text) {
   if (!text) return text;

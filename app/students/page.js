@@ -15,32 +15,23 @@ export default function Students() {
   const router = useRouter();
 
   useEffect(() => {
-    const checkAuth = () => {
-      const cookies = document.cookie.split("; ");
-      const tokenCookie = cookies.find((row) => row.startsWith("token="));
-      const userCookie = cookies.find((row) => row.startsWith("user="));
-      
-      if (!tokenCookie) {
-        router.push("/login");
-        return;
-      }
-      
-      const token = tokenCookie.split("=")[1];
-      if (!token) {
-        router.push("/login");
-        return;
-      }
-      
-      if (userCookie) {
-        try {
-          const userData = JSON.parse(decodeURIComponent(userCookie.split("=")[1]));
-          setUser(userData);
-        } catch (e) {
-          console.error("Error parsing user:", e);
+    const checkAuth = async () => {
+      try {
+        const res = await fetch("/api/auth", { cache: "no-store" });
+        const data = await res.json();
+
+        if (!data.success) {
+          router.push("/login");
+          return;
         }
+
+        setUser(data.data.user);
+      } catch (error) {
+        console.error("Error checking auth:", error);
+        router.push("/login");
+      } finally {
+        setPageLoading(false);
       }
-      
-      setPageLoading(false);
     };
     
     checkAuth();
@@ -56,18 +47,16 @@ export default function Students() {
 
   const fetchStudents = async () => {
     try {
-      const token = document.cookie
-        .split("; ")
-        .find((row) => row.startsWith("token="))
-        ?.split("=")[1];
-
-      const res = await fetch("/api/students", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      const res = await fetch("/api/students");
       const data = await res.json();
-      setStudents(data.data || []);
+
+      if (data.success) {
+        setStudents(data.data.students || []);
+      } else if (res.status === 401) {
+        router.push("/login");
+      } else {
+        setStudents([]);
+      }
     } catch (error) {
       console.error("Error fetching students:", error);
     } finally {
@@ -78,13 +67,8 @@ export default function Students() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const token = document.cookie
-        .split("; ")
-        .find((row) => row.startsWith("token="))
-        ?.split("=")[1];
-
       const url = editingId
-        ? `/api/students?id=${editingId}`
+        ? `/api/students/${editingId}`
         : "/api/students";
       const method = editingId ? "PUT" : "POST";
 
@@ -92,7 +76,6 @@ export default function Students() {
         method,
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify(form),
       });
@@ -114,16 +97,8 @@ export default function Students() {
 
   const handleDelete = async (id) => {
     try {
-      const token = document.cookie
-        .split("; ")
-        .find((row) => row.startsWith("token="))
-        ?.split("=")[1];
-
-      const res = await fetch(`/api/students?id=${id}`, {
+      const res = await fetch(`/api/students/${id}`, {
         method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
       });
       if (res.ok) {
         fetchStudents();

@@ -28,15 +28,6 @@ export default function Navbar() {
     }
 
     try {
-      const cookies = document.cookie.split("; ");
-      const tokenCookie = cookies.find((row) => row.startsWith("token="));
-
-      if (!tokenCookie) {
-        setUser(null);
-        setNotificationCount(0);
-        return;
-      }
-
       const res = await fetch("/api/auth", { cache: "no-store" });
       const data = await res.json();
 
@@ -204,10 +195,9 @@ export default function Navbar() {
       // Ignore
     }
 
-    document.cookie = "token=; path=/; max-age=0";
-    document.cookie = "user=; path=/; max-age=0";
-
     setUser(null);
+    setNotificationCount(0);
+    setNotifications([]);
     router.push("/login");
     router.refresh();
   };

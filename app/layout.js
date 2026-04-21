@@ -2,7 +2,7 @@ import "./globals.css";
 import Navbar from "./components/Navbar";
 
 export const metadata = {
-  title: "Student Management System",
+  title: "EduHub",
   description: "A modern student management application",
 };
 

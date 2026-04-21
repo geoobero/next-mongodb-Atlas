@@ -1,17 +1,14 @@
 import { NextResponse } from "next/server";
+import { getAuthCookieOptions } from "../../auth-helpers";
 
 export async function POST(request) {
   try {
     const response = NextResponse.json({ success: true, message: "Logged out" });
-    
-    response.cookies.set("token", "", {
-      path: "/",
-      maxAge: 0,
-    });
-    
+
+    response.cookies.set("token", "", getAuthCookieOptions(0));
     response.cookies.set("user", "", {
-      path: "/",
-      maxAge: 0,
+      ...getAuthCookieOptions(0),
+      httpOnly: false,
     });
     
     return response;

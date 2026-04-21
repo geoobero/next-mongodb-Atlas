@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
 import jwt from "jsonwebtoken";
 import { connectDB, User } from "../models";
+import { getAuthCookieOptions, getJwtSecret } from "../auth-helpers";
 
-const JWT_SECRET = process.env.JWT_SECRET || "your-super-secret-key-change-in-production";
+const JWT_SECRET = getJwtSecret();
 
 const loginAttempts = new Map();
 const MAX_ATTEMPTS = 5;
@@ -86,13 +87,6 @@ export async function POST(request) {
         profilePicture: user.profilePicture || ""
       };
 
-      const cookieUserData = {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-        role: user.role
-      };
-
       const response = NextResponse.json({
         success: true,
         data: {
@@ -101,15 +95,7 @@ export async function POST(request) {
         }
       });
 
-      response.cookies.set("token", token, {
-        path: "/",
-        maxAge: 60 * 60 * 24 * 7,
-      });
-
-      response.cookies.set("user", JSON.stringify(cookieUserData), {
-        path: "/",
-        maxAge: 60 * 60 * 24 * 7,
-      });
+      response.cookies.set("token", token, getAuthCookieOptions(60 * 60 * 24 * 7));
 
       return response;
     }

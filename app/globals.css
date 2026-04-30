@@ -24,3 +24,83 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+.assistant-glow-border {
+  --assistant-shine-x: -140%;
+  --assistant-shine-y: 140%;
+}
+
+.assistant-glow-border {
+  position: relative;
+  isolation: isolate;
+}
+
+.assistant-glow-border::before {
+  content: "";
+  position: absolute;
+  inset: -4px;
+  z-index: -1;
+  border-radius: inherit;
+  background: linear-gradient(135deg, #ec4899, #06b6d4, #8b5cf6);
+  filter: blur(14px);
+  opacity: 0.9;
+  transform: translate(-3px, 3px);
+}
+
+.assistant-glow-border::after {
+  content: "";
+  position: absolute;
+  inset: -2px;
+  z-index: 1;
+  padding: 2px;
+  border-radius: inherit;
+  pointer-events: none;
+  background: conic-gradient(
+    from 0deg,
+    #ffffff,
+    #38bdf8,
+    #ec4899,
+    #8b5cf6,
+    #ffffff
+  );
+  filter: drop-shadow(0 0 8px rgba(56, 189, 248, 0.85));
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  mask-composite: exclude;
+}
+
+.assistant-glow-border > * {
+  position: relative;
+  z-index: 2;
+}
+
+.assistant-shine {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.assistant-shine::before {
+  content: "";
+  position: absolute;
+  inset: -60%;
+  background: linear-gradient(
+    135deg,
+    transparent 35%,
+    rgba(255, 255, 255, 0.16) 45%,
+    rgba(56, 189, 248, 0.26) 50%,
+    rgba(255, 255, 255, 0.16) 55%,
+    transparent 65%
+  );
+  transform: translate(var(--assistant-shine-x), var(--assistant-shine-y));
+  transition: transform 700ms ease;
+}
+
+.assistant-glow-border:hover {
+  --assistant-shine-x: 140%;
+  --assistant-shine-y: -140%;
+}
